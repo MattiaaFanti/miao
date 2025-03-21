@@ -14,84 +14,59 @@
       height: 100vh;
       border: none;
     }
-    /* Nascondi elementi potenzialmente pubblicitari */
-    [class*="ad"], [id*="ad"], .banner, .popup, [style*="position: fixed"], [style*="z-index: 999"] {
-      display: none !important;
-    }
   </style>
 </head>
 <body>
-  <!-- Iframe che carica il sito target -->
   <iframe id="mirrorFrame" src="https://calciostreaming.shop/"></iframe>
 
   <script>
-    // Funzione per bloccare ads e pop-up senza dipendere da domini
-    function blockAds(iframe) {
+    console.log("Inizio script di blocco ads e controllo navigazione");
+
+    // Funzione per gestire iframe e bloccare ads/pop-up
+    function manageIframe(iframe) {
       try {
         const iframeWindow = iframe.contentWindow;
         const iframeDoc = iframe.contentDocument || iframeWindow.document;
+        console.log("Iframe caricato, applico controlli");
 
-        // 1. Blocca tutti i pop-up
+        // 1. Blocca pop-up
         iframeWindow.open = function () {
-          console.log('Pop-up bloccato');
+          console.log("Tentativo di pop-up bloccato nell'iframe");
           return null;
         };
 
-        // 2. Intercetta richieste sospette basate su pattern generici
-        const originalFetch = iframeWindow.fetch;
-        iframeWindow.fetch = function (url) {
-          // Blocca richieste con parole chiave comuni nelle ads
-          const adKeywords = ['ad', 'banner', 'popup', 'sponsor', 'track'];
-          if (adKeywords.some(keyword => url.toLowerCase().includes(keyword))) {
-            console.log('Richiesta sospetta bloccata:', url);
-            return Promise.reject('Bloccata');
-          }
-          return originalFetch.apply(this, arguments);
-        };
-
-        // 3. Rimuovi script sospetti (es. con window.open o eval)
-        iframeDoc.querySelectorAll('script').forEach(script => {
-          const content = script.innerHTML.toLowerCase();
-          if (content.includes('window.open') || content.includes('eval') || content.includes('document.write')) {
-            console.log('Script sospetto rimosso');
-            script.remove();
-          }
-        });
-
-        // 4. Rimuovi iframe e elementi con caratteristiche di ads
-        const adSelectors = [
-          '[class*="ad"]', '[id*="ad"]', '.banner', '.popup',
-          'iframe:not(#mirrorFrame)', // Evita di rimuovere il nostro iframe
-          '[style*="position: fixed"]', // Elementi fissi (tipici dei pop-up)
-          '[style*="z-index: 999"]'    // Elementi con z-index alto
-        ].join(', ');
-        iframeDoc.querySelectorAll(adSelectors).forEach(el => {
-          console.log('Elemento pubblicitario rimosso:', el);
-          el.remove();
+        // 2. Intercetta i click sui link e forza la navigazione nell'iframe
+        iframeDoc.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault(); // Impedisci il comportamento predefinito
+            const href = link.getAttribute('href');
+            if (href && !href.startsWith('#')) { // Ignora ancore interne
+              console.log("Link intercettato, apro nell'iframe:", href);
+              iframe.src = href; // Aggiorna l'iframe con il nuovo URL
+            }
+          });
         });
 
       } catch (e) {
-        console.log('Accesso al DOM dell\'iframe limitato:', e);
+        console.log("Errore: accesso al DOM dell'iframe limitato (same-origin policy)", e);
       }
     }
 
-    // Esegui il blocco quando l'iframe si carica
-    const iframe = document.getElementById('mirrorFrame');
-    iframe.addEventListener('load', () => {
-      blockAds(iframe);
+    // Esegui quando l'iframe si carica
+    const iframe = document.getElementById("mirrorFrame");
+    iframe.addEventListener("load", () => {
+      console.log("Iframe completamente caricato");
+      manageIframe(iframe);
     });
 
-    // Riprova a bloccare ads quando l'utente naviga nell'iframe
-    iframe.contentWindow.addEventListener('click', () => {
-      setTimeout(() => blockAds(iframe), 500); // Ritardo per il caricamento
+    // Riprova a gestire i link quando l'utente naviga
+    iframe.addEventListener("click", () => {
+      setTimeout(() => manageIframe(iframe), 500); // Ritardo per il caricamento della nuova pagina
     });
 
-    // Blocca pop-up a livello globale (per ads che escono dall'iframe)
-    window.onbeforeunload = function () {
-      return 'Stai tentando di aprire una pagina di ads?';
-    };
+    // Blocca pop-up globali
     window.open = function () {
-      console.log('Pop-up globale bloccato');
+      console.log("Tentativo di pop-up globale bloccato");
       return null;
     };
   </script>
