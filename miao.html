@@ -20,55 +20,29 @@
   <iframe id="mirrorFrame" src="https://calciostreaming.shop/"></iframe>
 
   <script>
-    console.log("Inizio script di blocco ads e controllo navigazione");
-
-    // Funzione per gestire iframe e bloccare ads/pop-up
-    function manageIframe(iframe) {
-      try {
-        const iframeWindow = iframe.contentWindow;
-        const iframeDoc = iframe.contentDocument || iframeWindow.document;
-        console.log("Iframe caricato, applico controlli");
-
-        // 1. Blocca pop-up
-        iframeWindow.open = function () {
-          console.log("Tentativo di pop-up bloccato nell'iframe");
-          return null;
-        };
-
-        // 2. Intercetta i click sui link e forza la navigazione nell'iframe
-        iframeDoc.querySelectorAll('a').forEach(link => {
-          link.addEventListener('click', (e) => {
-            e.preventDefault(); // Impedisci il comportamento predefinito
-            const href = link.getAttribute('href');
-            if (href && !href.startsWith('#')) { // Ignora ancore interne
-              console.log("Link intercettato, apro nell'iframe:", href);
-              iframe.src = href; // Aggiorna l'iframe con il nuovo URL
-            }
-          });
-        });
-
-      } catch (e) {
-        console.log("Errore: accesso al DOM dell'iframe limitato (same-origin policy)", e);
-      }
-    }
-
-    // Esegui quando l'iframe si carica
     const iframe = document.getElementById("mirrorFrame");
-    iframe.addEventListener("load", () => {
-      console.log("Iframe completamente caricato");
-      manageIframe(iframe);
-    });
 
-    // Riprova a gestire i link quando l'utente naviga
-    iframe.addEventListener("click", () => {
-      setTimeout(() => manageIframe(iframe), 500); // Ritardo per il caricamento della nuova pagina
-    });
-
-    // Blocca pop-up globali
-    window.open = function () {
-      console.log("Tentativo di pop-up globale bloccato");
+    // Blocca pop-up e reindirizza nell'iframe
+    window.open = function (url) {
+      console.log("Pop-up intercettato, reindirizzo nell'iframe:", url);
+      if (url) iframe.src = url;
       return null;
     };
+
+    // Gestisci i click sui link per forzare la navigazione nell'iframe
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest("a");
+      if (link && link.href && link.target === "_blank") {
+        e.preventDefault();
+        console.log("Link con target='_blank' intercettato:", link.href);
+        iframe.src = link.href;
+      }
+    });
+
+    // Log di caricamento per debug
+    iframe.addEventListener("load", () => {
+      console.log("Iframe caricato con URL:", iframe.src);
+    });
   </script>
 </body>
 </html>
