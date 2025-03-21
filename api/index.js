@@ -1,56 +1,59 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const baseUrl = "https://miao-e6gi.vercel.app";  // Cambia il dominio qui
-  const url = `${baseUrl}${req.url}`;  // Crea l'URL finale per la richiesta
+  const baseUrl = "https://calciostreaming.shop";
+  const currentUrl = `https://${req.headers.host}${req.url}`;
+
+  // Evita il loop infinito
+  if (currentUrl.startsWith('https://miao-e6gi.vercel.app')) {
+    res.status(400).send('Richiesta non valida');
+    return;
+  }
+
+  const url = `${baseUrl}${req.url}`;
 
   try {
-    // Esegui la richiesta HTTP al sito da mirrorare
     const response = await fetch(url);
     let html = await response.text();
 
-    // Rimuovi gli attributi target="_blank" dai link per evitare di aprire in nuove finestre
+    // Rimuovi target="_blank" da tutti i link
     html = html.replace(/target=["']_blank["']/gi, '');
 
-    // Aggiungi uno script personalizzato per la gestione della navigazione
+    // Inietta uno script per controllare la navigazione
     html += `
       <script>
-        // Reindirizza solo i link che appartengono al dominio del mirror
         window.open = function(url) {
           if (url && url.startsWith("${baseUrl}")) {
-            window.location.href = url;  // Naviga all'interno del sito mirrorato
+            window.location.href = url;
           }
-          return null;  // Non fare nulla per gli altri link
+          return null;
         };
 
         document.addEventListener('click', (e) => {
-          const link = e.target.closest('a');  // Trova il link cliccato
+          const link = e.target.closest('a');
           if (link && link.href) {
-            e.preventDefault();  // Blocca il comportamento di default
+            e.preventDefault();
             if (link.href.startsWith("${baseUrl}")) {
-              window.location.href = link.href;  // Naviga all'interno del sito mirrorato
+              window.location.href = link.href;
             } else {
-              console.log("Link pubblicitario bloccato:", link.href);  // Log per i link esterni
+              console.log("Link pubblicitario bloccato:", link.href);
             }
           }
         });
 
         window.addEventListener('beforeunload', (e) => {
           const currentUrl = window.location.href;
-          // Blocca la navigazione se non si sta uscendo dal dominio del mirror
           if (!currentUrl.startsWith("${baseUrl}")) {
             e.preventDefault();
-            e.returnValue = '';  // Mostra il prompt di conferma per uscire
+            e.returnValue = '';
           }
         });
       </script>
     `;
 
-    // Imposta l'intestazione per restituire HTML e invia il risultato
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(html);
   } catch (error) {
-    // Gestisci eventuali errori nella richiesta o nel processamento
     res.status(500).send('Errore nel caricamento della pagina');
   }
 };
