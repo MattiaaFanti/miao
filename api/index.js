@@ -1,14 +1,16 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const baseUrl = "https://miao-mbpl.vercel.app";  // Dominio corretto
-  const url = `${baseUrl}${req.url}`;
+  const baseUrl = "https://miao-mbpl.vercel.app";  // URL del tuo sito su Vercel
+  const requestedUrl = `https://${req.headers.host}${req.url}`;
 
-  // Evita che l'URL di richiesta venga trattato come un link pubblicitario
-  if (req.url.includes('miao-mbpl.vercel.app')) {
-    res.status(400).send('Richiesta non valida');
+  // Controllo per evitare che venga fatto il mirror su se stesso (evitare il loop)
+  if (requestedUrl.startsWith(baseUrl)) {
+    res.status(400).send('Richiesta non valida - Ciclo infinito');
     return;
   }
+
+  const url = `${baseUrl}${req.url}`;
 
   try {
     const response = await fetch(url);
@@ -21,6 +23,7 @@ module.exports = async (req, res) => {
     html += `
       <script>
         window.open = function(url) {
+          // Permetti solo i link che iniziano con ${baseUrl}
           if (url && url.startsWith("${baseUrl}")) {
             window.location.href = url;
           }
@@ -31,6 +34,7 @@ module.exports = async (req, res) => {
           const link = e.target.closest('a');
           if (link && link.href) {
             e.preventDefault();
+            // Permetti solo i link che iniziano con ${baseUrl}
             if (link.href.startsWith("${baseUrl}")) {
               window.location.href = link.href;
             } else {
