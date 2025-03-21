@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const baseUrl = "https://calciostreaming.shop";  // URL del sito che vuoi mirrorare
+  const baseUrl = "https://miao-e6gi.vercel.app";  // Cambia il dominio qui
   const url = `${baseUrl}${req.url}`;  // Crea l'URL finale per la richiesta
 
   try {
