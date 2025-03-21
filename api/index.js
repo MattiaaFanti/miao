@@ -4,9 +4,10 @@ module.exports = async (req, res) => {
   const baseUrl = "https://miao-mbpl.vercel.app";  // URL del tuo sito su Vercel
   const requestedUrl = `https://${req.headers.host}${req.url}`;
 
-  // Controllo per evitare che venga fatto il mirror su se stesso (evitare il loop)
+  // Controllo per evitare il mirror su se stesso
   if (requestedUrl.startsWith(baseUrl)) {
-    res.status(400).send('Richiesta non valida - Ciclo infinito');
+    // Se la richiesta è per il sito di Vercel, non fare il mirror
+    res.status(404).send('Pagina non trovata');
     return;
   }
 
