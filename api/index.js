@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const baseUrl = "https://miao";  // URL del tuo sito su Vercel
+  const baseUrl = "https://miao-ig6w.vercel.app/";  // URL del tuo sito su Vercel
   const requestedUrl = `https://${req.headers.host}${req.url}`;
 
   // Controllo per evitare il mirror su se stesso
