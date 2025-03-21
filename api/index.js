@@ -1,16 +1,14 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const baseUrl = "https://miao-mbpl.vercel.app";  // Modifica il dominio qui
-  const currentUrl = `https://${req.headers.host}${req.url}`;
+  const baseUrl = "https://miao-mbpl.vercel.app";  // Dominio corretto
+  const url = `${baseUrl}${req.url}`;
 
-  // Evita il loop infinito: se la richiesta è già a "miao-mbpl.vercel.app", rispondi con errore
-  if (currentUrl.startsWith(baseUrl)) {
+  // Evita che l'URL di richiesta venga trattato come un link pubblicitario
+  if (req.url.includes('miao-mbpl.vercel.app')) {
     res.status(400).send('Richiesta non valida');
     return;
   }
-
-  const url = `${baseUrl}${req.url}`;
 
   try {
     const response = await fetch(url);
