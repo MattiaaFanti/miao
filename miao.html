@@ -8,43 +8,30 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      font-family: Arial, sans-serif;
     }
     iframe {
       width: 100%;
       height: 100vh;
       border: none;
     }
-    .warning {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 10px;
-      z-index: 1000;
-      display: none;
-    }
   </style>
 </head>
 <body>
-  <div class="warning" id="warningMsg">Torna al mirror se vieni reindirizzato!</div>
   <iframe id="mirrorFrame" src="https://calciostreaming.shop/"></iframe>
 
   <script>
     const iframe = document.getElementById("mirrorFrame");
-    const warningMsg = document.getElementById("warningMsg");
-    const baseUrl = "https://calciostreaming.shop"; // Dominio del sito mirrorato
+    const baseUrl = "https://calciostreaming.shop";
 
-    // Funzione per verificare se un URL appartiene al sito originale
+    // Funzione per verificare se un URL è del sito originale
     function isLegitLink(url) {
-      return url && (url.startsWith(baseUrl) || url.startsWith('/')); // Link assoluti o relativi
+      return url && (url.startsWith(baseUrl) || url.startsWith('/'));
     }
 
-    // Blocca pop-up e filtra i link
+    // Blocca window.open e gestisci solo link legittimi
     window.open = function (url) {
-      console.log("Pop-up intercettato:", url);
       if (isLegitLink(url)) {
-        console.log("Link legittimo, apro nell'iframe:", url);
+        console.log("Link legittimo, aggiorno iframe:", url);
         iframe.src = url.startsWith('/') ? baseUrl + url : url;
       } else {
         console.log("Link pubblicitario bloccato:", url);
@@ -52,30 +39,28 @@
       return null;
     };
 
-    // Gestisci i click globali (per link con target="_blank")
+    // Intercetta click globali per forzare la navigazione nell'iframe
     document.addEventListener("click", (e) => {
       const link = e.target.closest("a");
       if (link && link.href) {
+        e.preventDefault(); // Blocca qualsiasi azione predefinita
         const href = link.href;
         if (isLegitLink(href)) {
-          e.preventDefault();
-          console.log("Link legittimo intercettato, apro nell'iframe:", href);
+          console.log("Link legittimo cliccato, aggiorno iframe:", href);
           iframe.src = href;
         } else {
-          e.preventDefault();
           console.log("Link pubblicitario bloccato:", href);
         }
       }
     });
 
-    // Mostra avviso se l'utente esce
-    window.addEventListener("blur", () => {
-      console.log("Finestra principale persa, possibile reindirizzamento");
-      warningMsg.style.display = "block";
-      setTimeout(() => warningMsg.style.display = "none", 5000);
+    // Previeni reindirizzamenti esterni
+    window.addEventListener("beforeunload", (e) => {
+      e.preventDefault();
+      e.returnValue = "Sei sicuro di voler uscire dal mirror?"; // Prompt per confermare
     });
 
-    // Log di caricamento
+    // Log per debug
     iframe.addEventListener("load", () => {
       console.log("Iframe caricato con URL:", iframe.src);
     });
