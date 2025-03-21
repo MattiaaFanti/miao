@@ -8,38 +8,74 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+      font-family: Arial, sans-serif;
     }
     iframe {
       width: 100%;
       height: 100vh;
       border: none;
     }
+    .warning {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      z-index: 1000;
+      display: none;
+    }
   </style>
 </head>
 <body>
+  <div class="warning" id="warningMsg">Torna al mirror se vieni reindirizzato!</div>
   <iframe id="mirrorFrame" src="https://calciostreaming.shop/"></iframe>
 
   <script>
     const iframe = document.getElementById("mirrorFrame");
+    const warningMsg = document.getElementById("warningMsg");
+    const baseUrl = "https://calciostreaming.shop"; // Dominio del sito mirrorato
 
-    // Blocca pop-up e reindirizza nell'iframe
+    // Funzione per verificare se un URL appartiene al sito originale
+    function isLegitLink(url) {
+      return url && (url.startsWith(baseUrl) || url.startsWith('/')); // Link assoluti o relativi
+    }
+
+    // Blocca pop-up e filtra i link
     window.open = function (url) {
-      console.log("Pop-up intercettato, reindirizzo nell'iframe:", url);
-      if (url) iframe.src = url;
+      console.log("Pop-up intercettato:", url);
+      if (isLegitLink(url)) {
+        console.log("Link legittimo, apro nell'iframe:", url);
+        iframe.src = url.startsWith('/') ? baseUrl + url : url;
+      } else {
+        console.log("Link pubblicitario bloccato:", url);
+      }
       return null;
     };
 
-    // Gestisci i click sui link per forzare la navigazione nell'iframe
+    // Gestisci i click globali (per link con target="_blank")
     document.addEventListener("click", (e) => {
       const link = e.target.closest("a");
-      if (link && link.href && link.target === "_blank") {
-        e.preventDefault();
-        console.log("Link con target='_blank' intercettato:", link.href);
-        iframe.src = link.href;
+      if (link && link.href) {
+        const href = link.href;
+        if (isLegitLink(href)) {
+          e.preventDefault();
+          console.log("Link legittimo intercettato, apro nell'iframe:", href);
+          iframe.src = href;
+        } else {
+          e.preventDefault();
+          console.log("Link pubblicitario bloccato:", href);
+        }
       }
     });
 
-    // Log di caricamento per debug
+    // Mostra avviso se l'utente esce
+    window.addEventListener("blur", () => {
+      console.log("Finestra principale persa, possibile reindirizzamento");
+      warningMsg.style.display = "block";
+      setTimeout(() => warningMsg.style.display = "none", 5000);
+    });
+
+    // Log di caricamento
     iframe.addEventListener("load", () => {
       console.log("Iframe caricato con URL:", iframe.src);
     });
