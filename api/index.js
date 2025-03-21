@@ -1,11 +1,11 @@
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
-  const baseUrl = "https://calciostreaming.shop";
+  const baseUrl = "https://miao-mbpl.vercel.app";  // Modifica il dominio qui
   const currentUrl = `https://${req.headers.host}${req.url}`;
 
-  // Evita il loop infinito
-  if (currentUrl.startsWith('https://miao-e6gi.vercel.app')) {
+  // Evita il loop infinito: se la richiesta è già a "miao-mbpl.vercel.app", rispondi con errore
+  if (currentUrl.startsWith(baseUrl)) {
     res.status(400).send('Richiesta non valida');
     return;
   }
